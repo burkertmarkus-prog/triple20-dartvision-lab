@@ -34,6 +34,12 @@ h1 { margin-bottom: .35rem; font-size: clamp(2rem, 5vw, 4rem); line-height: .95;
 .notice strong { color: var(--text); }
 .panel { background: rgba(14, 29, 49, .94); border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 15px 35px rgba(0,0,0,.22); }
 .setup { display: grid; grid-template-columns: minmax(140px, 1fr) minmax(160px, 1fr) auto auto; gap: 12px; align-items: end; padding: 16px; margin-bottom: 18px; }
+.simulator { display: grid; grid-template-columns: minmax(230px, .8fr) minmax(480px, 1.4fr); gap: 16px; padding: 16px; margin-bottom: 18px; }
+.simulator h2 { margin-bottom: .35rem; }
+.simulator-help, .simulator-status { color: var(--muted); margin-bottom: 0; }
+.simulator-form { display: grid; grid-template-columns: repeat(3, minmax(90px, 1fr)) auto; gap: 8px; align-items: end; }
+.simulator-form select { margin-top: 6px; }
+.simulator-status { grid-column: 1 / -1; padding-top: 10px; border-top: 1px solid var(--line); }
 .boards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
 .board { padding: 18px; }
 .board-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
@@ -67,11 +73,13 @@ footer { padding: 24px 0 40px; color: var(--muted); text-align: center; font-siz
 @media (max-width: 900px) {
   .boards { grid-template-columns: 1fr; }
   .setup { grid-template-columns: 1fr 1fr; }
+  .simulator { grid-template-columns: 1fr; }
 }
 @media (max-width: 560px) {
   .topbar { padding-top: 18px; }
   .topbar, main, footer { width: min(100% - 20px, 1500px); }
   .setup, .players { grid-template-columns: 1fr; }
+  .simulator-form { grid-template-columns: 1fr 1fr; }
   .dart-controls { grid-template-columns: 1fr 1fr; }
   .add-dart, .undo { width: 100%; }
   .board { padding: 13px; }

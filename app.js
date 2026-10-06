@@ -10,7 +10,7 @@ function newBoard(index, startScore = 501, bestOf = 3) {
 }
 function newSession() {
   const startScore=Number(startScoreSelect.value), bestOf=Number(bestOfSelect.value);
-  return { schemaVersion:2, createdAt:new Date().toISOString(), startScore, bestOf, boards:Array.from({length:BOARD_COUNT},(_,i)=>newBoard(i,startScore,bestOf)) };
+  return { schemaVersion:2, createdAt:new Date().toISOString(), startScore, bestOf, processedEventIds:[], boards:Array.from({length:BOARD_COUNT},(_,i)=>newBoard(i,startScore,bestOf)) };
 }
 function loadSession() {
   try { const saved=JSON.parse(localStorage.getItem(STORAGE_KEY)); if(saved?.schemaVersion===2&&saved?.boards?.length===BOARD_COUNT)return saved; }
@@ -18,6 +18,7 @@ function loadSession() {
   return newSession();
 }
 let session=loadSession();
+session.processedEventIds ||= [];
 startScoreSelect.value=String(session.startScore||501); bestOfSelect.value=String(session.bestOf||3);
 const saveSession=()=>localStorage.setItem(STORAGE_KEY,JSON.stringify(session));
 const displayName=(board,player)=>board.names[player].trim()||`Spieler ${player==='a'?'1':'2'}`;
@@ -69,6 +70,20 @@ function editDart(board,scope,index,replacement){
   return true;
 }
 
+function receiveDartEvent(event){
+  const boardId=Number(event?.boardId),segment=Number(event?.segment),multiplier=Number(event?.multiplier);
+  const eventId=String(event?.eventId||`${Date.now()}-${Math.random().toString(16).slice(2)}`);
+  if(!Number.isInteger(boardId)||boardId<1||boardId>BOARD_COUNT)return {ok:false,message:'Unbekannte Board-ID.'};
+  if(![0,25,...Array.from({length:20},(_,i)=>i+1)].includes(segment))return {ok:false,message:'Ungültiges Dartfeld.'};
+  if(![1,2,3].includes(multiplier))return {ok:false,message:'Ungültiger Ring.'};
+  if(session.processedEventIds.includes(eventId))return {ok:false,duplicate:true,message:'Doppeltes Signal wurde ignoriert.'};
+  const board=session.boards[boardId-1],dart={...createDart(segment,multiplier),eventId,source:event?.source||'raspberry'};
+  const result=recordDart(board,dart);
+  if(result.ok){session.processedEventIds.push(eventId);session.processedEventIds=session.processedEventIds.slice(-500);saveSession();render();}
+  return {...result,boardId,dart};
+}
+window.DartVisionLab=Object.freeze({receiveDartEvent});
+
 function render(){
   boardsElement.replaceChildren();
   session.boards.forEach((board,index)=>{
@@ -102,10 +117,10 @@ boardsElement.addEventListener('input',event=>{
 boardsElement.addEventListener('submit',event=>{
   if(!event.target.classList.contains('throw-form'))return;event.preventDefault();
   const root=event.target.closest('.board'),board=session.boards[Number(root.dataset.boardIndex)];
-  const dart=createDart(Number(event.target.querySelector('.segment-input').value),Number(event.target.querySelector('.multiplier-input').value));
+  const segment=Number(event.target.querySelector('.segment-input').value),multiplier=Number(event.target.querySelector('.multiplier-input').value),dart=createDart(segment,multiplier);
   if(board.editing){const changed=editDart(board,board.editing.scope,board.editing.index,dart);if(changed){saveSession();render();}else root.querySelector('.message').textContent='Dieser Dart konnte nicht mehr geändert werden.';return;}
-  const result=recordDart(board,dart);
-  if(result.ok){saveSession();render();boardsElement.querySelector(`[data-board-index="${root.dataset.boardIndex}"] .message`).textContent=result.message;}
+  const result=receiveDartEvent({boardId:Number(root.dataset.boardIndex)+1,segment,multiplier,source:'manual-test'});
+  if(result.ok){boardsElement.querySelector(`[data-board-index="${root.dataset.boardIndex}"] .message`).textContent=result.message;}
   else root.querySelector('.message').textContent=result.message;
 });
 boardsElement.addEventListener('click',event=>{
@@ -116,5 +131,11 @@ boardsElement.addEventListener('click',event=>{
   board.editing=null;if(undo(board)){board.lastVisit=null;saveSession();render();}else root.querySelector('.message').textContent='Noch kein Dart zum Korrigieren vorhanden.';
 });
 document.querySelector('#newSession').addEventListener('click',()=>{if(!confirm('Neue Testsitzung starten? Die aktuellen lokalen Testdaten werden ersetzt.'))return;session=newSession();saveSession();render();});
+document.querySelector('#simulatorForm').addEventListener('submit',event=>{
+  event.preventDefault();
+  const result=receiveDartEvent({boardId:Number(document.querySelector('#simulatorBoard').value),segment:Number(document.querySelector('#simulatorSegment').value),multiplier:Number(document.querySelector('#simulatorMultiplier').value),source:'raspberry-simulator',eventId:crypto.randomUUID?.()||undefined});
+  const status=document.querySelector('#simulatorStatus');
+  status.textContent=result.ok?`Board ${result.boardId}: ${result.dart.label} erkannt (${result.dart.score} Punkte).`:result.message;
+});
 document.querySelector('#exportSession').addEventListener('click',()=>{const file=new Blob([JSON.stringify(session,null,2)],{type:'application/json'}),link=document.createElement('a');link.href=URL.createObjectURL(file);link.download=`dartvision-test-${new Date().toISOString().slice(0,10)}.json`;link.click();URL.revokeObjectURL(link.href);});
 render();
