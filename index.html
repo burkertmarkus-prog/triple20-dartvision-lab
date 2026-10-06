@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#07111f">
+  <title>Triple20 DartVision Labor</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">TRIPLE20 · GETRENNTE TESTUMGEBUNG</p>
+      <h1>DartVision Labor</h1>
+      <p class="subtitle">Vier virtuelle Boards – nur lokale Testdaten, keine Verbindung zur Triple20-App.</p>
+    </div>
+    <span class="local-badge">Nur lokal</span>
+  </header>
+
+  <main>
+    <section class="notice" aria-label="Sicherheitshinweis">
+      <strong>Sicherer Laborbetrieb:</strong>
+      Diese Seite verwendet weder Supabase noch Pushnachrichten oder den Triple20-Service-Worker.
+    </section>
+
+    <section class="setup panel">
+      <div>
+        <label for="startScore">Startwert</label>
+        <select id="startScore">
+          <option value="301">301</option>
+          <option value="501" selected>501</option>
+        </select>
+      </div>
+      <div>
+        <label for="bestOf">Spielmodus</label>
+        <select id="bestOf">
+          <option value="1">Best of 1</option>
+          <option value="3" selected>Best of 3</option>
+          <option value="5">Best of 5</option>
+        </select>
+      </div>
+      <button id="newSession" class="primary" type="button">Neue Testsitzung</button>
+      <button id="exportSession" type="button">Testdaten exportieren</button>
+    </section>
+
+    <section id="boards" class="boards" aria-live="polite"></section>
+  </main>
+
+  <template id="boardTemplate">
+    <article class="board panel">
+      <div class="board-head">
+        <div>
+          <p class="eyebrow board-number"></p>
+          <h2 class="board-title"></h2>
+        </div>
+        <span class="status">Bereit</span>
+      </div>
+
+      <div class="players">
+        <label>Spieler 1<input class="player-name player-a-name" maxlength="30" autocomplete="off"></label>
+        <label>Spieler 2<input class="player-name player-b-name" maxlength="30" autocomplete="off"></label>
+      </div>
+
+      <div class="scoreboard">
+        <div class="player-card active" data-player="a">
+          <span class="player-label player-a-label">Spieler 1</span>
+          <strong class="remaining player-a-score">501</strong>
+          <span class="legs">Legs: <b class="player-a-legs">0</b></span>
+        </div>
+        <div class="versus">VS</div>
+        <div class="player-card" data-player="b">
+          <span class="player-label player-b-label">Spieler 2</span>
+          <strong class="remaining player-b-score">501</strong>
+          <span class="legs">Legs: <b class="player-b-legs">0</b></span>
+        </div>
+      </div>
+
+      <form class="throw-form">
+        <label class="throw-label">Aufnahme für <strong class="current-player">Spieler 1</strong></label>
+        <div class="throw-row">
+          <input class="throw-input" type="number" min="0" max="180" inputmode="numeric" placeholder="0–180" required>
+          <button class="primary" type="submit">Eintragen</button>
+          <button class="undo" type="button">Rückgängig</button>
+        </div>
+      </form>
+      <p class="message" role="status"></p>
+    </article>
+  </template>
+
+  <footer>Labor-Version 1.0 · Keine Daten verlassen dieses Gerät.</footer>
+  <script src="app.js" defer></script>
+</body>
+</html>
