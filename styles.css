@@ -54,8 +54,13 @@ h1 { margin-bottom: .35rem; font-size: clamp(2rem, 5vw, 4rem); line-height: .95;
 .visit { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-height: 44px; margin-top: 12px; padding: 9px 11px; border: 1px solid var(--line); border-radius: 10px; background: #081626; }
 .visit-title { color: var(--muted); font-size: .78rem; font-weight: 800; }
 .visit-darts { display: flex; gap: 6px; flex: 1; }
-.dart-chip { min-width: 42px; padding: 5px 8px; border-radius: 999px; background: var(--panel-2); color: var(--cyan); text-align: center; font-weight: 900; }
+.dart-chip { min-width: 42px; min-height: 34px; padding: 5px 8px; border-radius: 999px; background: var(--panel-2); color: var(--cyan); text-align: center; font-weight: 900; }
+.dart-chip:hover, .dart-chip.editing { border-color: var(--warn); color: var(--warn); }
 .visit-total { white-space: nowrap; }
+.last-visit { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 8px; padding: 9px 11px; border: 1px dashed var(--line); border-radius: 10px; }
+.last-visit[hidden] { display: none; }
+.last-visit-darts { display: flex; gap: 6px; }
+.cancel-edit { border-color: var(--warn); color: var(--warn); }
 .message { min-height: 1.25em; margin: 10px 0 0; color: var(--warn); font-weight: 750; }
 footer { padding: 24px 0 40px; color: var(--muted); text-align: center; font-size: .82rem; }
 

@@ -98,10 +98,15 @@
           </label>
           <button class="primary add-dart" type="submit">Dart eintragen</button>
           <button class="undo" type="button">Letzten Dart korrigieren</button>
+          <button class="cancel-edit" type="button" hidden>Korrektur abbrechen</button>
         </div>
       </form>
       <div class="visit" aria-label="Aktuelle Aufnahme">
         <span class="visit-title">Aktuelle Aufnahme</span><div class="visit-darts"></div><strong class="visit-total">0 Punkte</strong>
+      </div>
+      <div class="last-visit" hidden>
+        <span class="visit-title">Letzte Aufnahme – zum Korrigieren Dart antippen</span>
+        <div class="last-visit-darts"></div>
       </div>
       <p class="message" role="status"></p>
     </article>
