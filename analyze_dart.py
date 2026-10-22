@@ -143,7 +143,11 @@ def estimate_component_entry(candidate: dict, largest: dict) -> dict:
     return {"x": int(round(chosen[0])), "y": int(round(chosen[1]))}
 
 
-def select_cross_camera_consensus(camera_results: list[dict]) -> dict | None:
+def select_cross_camera_consensus(
+    camera_results: list[dict],
+    radii: dict,
+    profiles: dict,
+) -> dict | None:
     """Choose the candidate combination that represents one physical hit."""
     available = [
         (result["camera"], result["candidates"])
@@ -175,10 +179,26 @@ def select_cross_camera_consensus(camera_results: list[dict]) -> dict | None:
                 "combination": combination,
             }
 
-    # A quarter of the board radius is deliberately conservative. Wider
-    # disagreement is reported instead of forcing a misleading consensus.
-    if best is None or best["maxDistance"] > 0.25:
+    if best is None:
         return None
+
+    agreement_mode = "position"
+    confidence = "high"
+    if best["maxDistance"] > 0.25:
+        fields = [
+            classify_board_point(item["boardPoint"], radii, profiles)["field"]
+            for item in best["combination"]
+        ]
+        # With existing darts in the board, the visible shaft endpoint can
+        # shift radially between cameras. Accept a wider spread only when all
+        # cameras still identify the same non-miss scoring field.
+        field_counts = {field: fields.count(field) for field in set(fields) if field != "MISS"}
+        majority_field = max(field_counts, key=field_counts.get, default=None)
+        majority_count = field_counts.get(majority_field, 0)
+        if best["maxDistance"] > 0.40 or majority_count < 2:
+            return None
+        agreement_mode = "field" if majority_count == len(fields) else "field-majority"
+        confidence = "reduced"
 
     selected_by_camera = {}
     for (camera, _), candidate in zip(available, best["combination"]):
@@ -207,6 +227,8 @@ def select_cross_camera_consensus(camera_results: list[dict]) -> dict | None:
     )
     return {
         "cameraCount": len(best["combination"]),
+        "agreementMode": agreement_mode,
+        "confidence": confidence,
         "meanDistance": round(best["meanDistance"], 4),
         "maxDistance": round(best["maxDistance"], 4),
         "boardPoint": {"x": float(center[0]), "y": float(center[1])},
@@ -409,7 +431,9 @@ def main() -> None:
 
     report["ringRadii"] = calibrated_ring_radii(calibration)
     report["ringProfiles"] = calibrated_ring_profiles(calibration)
-    report["consensus"] = select_cross_camera_consensus(report["cameras"])
+    report["consensus"] = select_cross_camera_consensus(
+        report["cameras"], report["ringRadii"], report["ringProfiles"]
+    )
     if report["consensus"]:
         classification = classify_board_point(
             report["consensus"]["boardPoint"], report["ringRadii"], report["ringProfiles"]

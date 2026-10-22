@@ -68,15 +68,20 @@ Die Auswertung verwendet inzwischen alle drei Kameras gemeinsam:
   virtuelle Dartscheibe abgebildet.
 - Aus mehreren Bildveränderungen wird die Kandidatenkombination gewählt, die
   in allen Kameras denselben realen Einschlag beschreibt.
+- Bei teilweise verdeckten Darts kann eine eindeutige Zwei-von-drei-Mehrheit
+  den Treffer mit reduzierter Sicherheit bestätigen. Unterschiedliche Felder
+  ohne Mehrheit werden weiterhin verworfen.
 - Sektor und Ring werden automatisch aus der gemeinsamen Position bestimmt.
 - Treffer innerhalb von ungefähr einem Millimeter zu einer Drahtkante werden
   als `nearWire` gekennzeichnet. Sie können später in der Bedienoberfläche zur
   Bestätigung angeboten werden, anstatt stillschweigend falsch zu zählen.
 
-Die lokalen Referenzwürfe T5, S16, S7, D20, Bull, T19 und S6 werden derzeit
-korrekt erkannt. Diese kleine Stichprobe belegt noch keine allgemeine
-Zuverlässigkeit; weitere Tests müssen insbesondere Drahttreffer, verdeckte
-Darts und mehrere Darts im Board abdecken.
+Die lokalen Einzelwurf-Referenzen T5, S16, S7, D20, Bull, T19 und S6 sowie eine
+vollständige Drei-Dart-Folge D18, S6, S20 werden derzeit korrekt erkannt. D18
+war ein dokumentierter Drahtfall, bei dem die Sichtprüfung und die eigene
+Erkennung D18 ergaben, Autodarts jedoch S18 meldete. Diese kleine Stichprobe
+belegt noch keine allgemeine Zuverlässigkeit; weitere Tests müssen insbesondere
+enge Gruppierungen, stärkere Verdeckungen und Bouncer abdecken.
 
 ## Lokal starten
 
