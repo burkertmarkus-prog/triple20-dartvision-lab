@@ -88,6 +88,25 @@ enthält außerdem eine enge Gruppierung, die ohne Zwischenbilder korrekt als
 S14, S5 und S1 getrennt wurde. Sie belegt noch keine allgemeine Zuverlässigkeit;
 weitere Tests müssen insbesondere stärkere Verdeckungen und Bouncer abdecken.
 
+### Lokaler Live-Test einer Aufnahme
+
+`tools/live_test.py` beobachtet die drei vorhandenen Kamerastreams und erkennt
+bis zu drei nacheinander geworfene Darts. Es wartet nach einer Veränderung, bis
+das Bild wieder ruhig ist; dadurch soll die Hand beim Werfen nicht als Treffer
+gelten. Jeder erkannte Schritt wird nur lokal unter `captures/` gespeichert.
+
+Vor dem Start müssen alle Pfeile aus der Scheibe entfernt sein:
+
+```bash
+/Users/markusburkert/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin/python3 \
+  tools/live_test.py --host 192.168.0.101:3180 --board board4
+```
+
+Der Test endet nach drei Darts automatisch. Er liest ausschließlich die
+Kamerabilder und verwendet das Autodarts-Ergebnis nicht als Eingabe. Abziehen,
+Bouncer und ein automatischer Wechsel zur nächsten Aufnahme sind in dieser
+ersten Live-Stufe noch nicht freigegeben.
+
 ## Lokal starten
 
 Die Datei `index.html` kann zum ersten Ansehen direkt geöffnet werden. Für Tests auf einem zweiten Gerät wird später ein kleiner lokaler Webserver oder eine eigene GitHub-Pages-Testadresse verwendet.
