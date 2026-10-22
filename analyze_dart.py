@@ -256,6 +256,86 @@ def draw_selected_point(after_path: Path, result: dict) -> Image.Image:
     return marked
 
 
+def detect_multiple_hits(
+    camera_results: list[dict],
+    radii: dict,
+    profiles: dict,
+    primary: dict | None,
+    max_darts: int,
+) -> list[dict]:
+    if primary is None or max_darts <= 0:
+        return []
+    detections = [
+        {
+            "predictedField": primary["predictedField"],
+            "boardPoint": primary["boardPoint"],
+            "cameraCount": primary["cameraCount"],
+            "confidence": primary["confidence"],
+            "agreementMode": primary["agreementMode"],
+            "nearWire": primary["nearWire"],
+        }
+    ]
+    if max_darts == 1:
+        return detections
+
+    hypotheses = []
+    for left in range(CAMERA_COUNT):
+        for right in range(left + 1, CAMERA_COUNT):
+            left_candidates = [item for item in camera_results[left]["candidates"] if item["pixels"] >= 35]
+            right_candidates = [item for item in camera_results[right]["candidates"] if item["pixels"] >= 35]
+            for first, second in product(left_candidates, right_candidates):
+                first_point = np.asarray([first["boardPoint"]["x"], first["boardPoint"]["y"]])
+                second_point = np.asarray([second["boardPoint"]["x"], second["boardPoint"]["y"]])
+                distance = float(np.linalg.norm(first_point - second_point))
+                if distance > 0.22:
+                    continue
+                first_field = classify_board_point(first["boardPoint"], radii, profiles)["field"]
+                second_field = classify_board_point(second["boardPoint"], radii, profiles)["field"]
+                center = (first_point + second_point) / 2.0
+                center_point = {"x": float(center[0]), "y": float(center[1])}
+                center_classification = classify_board_point(center_point, radii, profiles)
+                same_field = first_field == second_field and first_field != "MISS"
+                if not same_field and distance > 0.10:
+                    continue
+                predicted = first_field if same_field else center_classification["field"]
+                if predicted == "MISS":
+                    continue
+                size_penalty = 0.02 * (
+                    1.0 / np.sqrt(first["pixels"]) + 1.0 / np.sqrt(second["pixels"])
+                )
+                hypotheses.append(
+                    {
+                        "predictedField": predicted,
+                        "boardPoint": center_point,
+                        "cameraCount": 2,
+                        "cameras": [left, right],
+                        "confidence": "reduced",
+                        "agreementMode": "pair-field" if same_field else "pair-position",
+                        "nearWire": center_classification["nearWire"],
+                        "distance": round(distance, 4),
+                        "_score": distance + size_penalty + (0.0 if same_field else 0.04),
+                    }
+                )
+
+    for hypothesis in sorted(hypotheses, key=lambda item: item["_score"]):
+        point = np.asarray([hypothesis["boardPoint"]["x"], hypothesis["boardPoint"]["y"]])
+        if any(
+            np.linalg.norm(
+                point - np.asarray([existing["boardPoint"]["x"], existing["boardPoint"]["y"]])
+            )
+            < 0.14
+            for existing in detections
+        ):
+            continue
+        if any(hypothesis["predictedField"] == existing["predictedField"] for existing in detections):
+            continue
+        hypothesis.pop("_score", None)
+        detections.append(hypothesis)
+        if len(detections) >= max_darts:
+            break
+    return detections
+
+
 def dilate(mask: np.ndarray, radius: int = 2) -> np.ndarray:
     padded = np.pad(mask, radius)
     result = np.zeros_like(mask)
@@ -402,6 +482,7 @@ def main() -> None:
     parser.add_argument("after", type=Path)
     parser.add_argument("--calibration", type=Path)
     parser.add_argument("--confirmed-field")
+    parser.add_argument("--max-darts", type=int, choices=(1, 2, 3), default=1)
     parser.add_argument("--threshold", type=int, default=35)
     args = parser.parse_args()
 
@@ -449,6 +530,13 @@ def main() -> None:
             args.confirmed_field is None
             or report["consensus"]["predictedField"].upper() == args.confirmed_field.upper()
         )
+    report["detections"] = detect_multiple_hits(
+        report["cameras"],
+        report["ringRadii"],
+        report["ringProfiles"],
+        report["consensus"],
+        args.max_darts,
+    )
     for camera, result in enumerate(report["cameras"]):
         marked = draw_selected_point(args.after / f"camera-{camera}.jpg", result)
         marked.save(output_dir / result["markedImage"], quality=94)

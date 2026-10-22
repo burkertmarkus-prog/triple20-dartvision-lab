@@ -71,6 +71,10 @@ Die Auswertung verwendet inzwischen alle drei Kameras gemeinsam:
 - Bei teilweise verdeckten Darts kann eine eindeutige Zwei-von-drei-Mehrheit
   den Treffer mit reduzierter Sicherheit bestätigen. Unterschiedliche Felder
   ohne Mehrheit werden weiterhin verworfen.
+- Mit `--max-darts 3` kann ein Vergleich zwischen leerer Scheibe und einer
+  vollständigen Aufnahme bis zu drei Treffer liefern. Ein Drei-Kamera-Treffer
+  hat Vorrang; weitere eng gruppierte Treffer dürfen durch zwei passende
+  Kameras mit reduzierter Sicherheit ergänzt werden.
 - Sektor und Ring werden automatisch aus der gemeinsamen Position bestimmt.
 - Treffer innerhalb von ungefähr einem Millimeter zu einer Drahtkante werden
   als `nearWire` gekennzeichnet. Sie können später in der Bedienoberfläche zur
@@ -80,8 +84,9 @@ Die lokalen Einzelwurf-Referenzen T5, S16, S7, D20, Bull, T19 und S6 sowie eine
 vollständige Drei-Dart-Folge D18, S6, S20 werden derzeit korrekt erkannt. D18
 war ein dokumentierter Drahtfall, bei dem die Sichtprüfung und die eigene
 Erkennung D18 ergaben, Autodarts jedoch S18 meldete. Diese kleine Stichprobe
-belegt noch keine allgemeine Zuverlässigkeit; weitere Tests müssen insbesondere
-enge Gruppierungen, stärkere Verdeckungen und Bouncer abdecken.
+enthält außerdem eine enge Gruppierung, die ohne Zwischenbilder korrekt als
+S14, S5 und S1 getrennt wurde. Sie belegt noch keine allgemeine Zuverlässigkeit;
+weitere Tests müssen insbesondere stärkere Verdeckungen und Bouncer abdecken.
 
 ## Lokal starten
 
