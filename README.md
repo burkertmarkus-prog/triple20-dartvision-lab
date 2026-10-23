@@ -98,7 +98,7 @@ gelten. Jeder erkannte Schritt wird nur lokal unter `captures/` gespeichert.
 Vor dem Start müssen alle Pfeile aus der Scheibe entfernt sein:
 
 ```bash
-/Users/markusburkert/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin/python3 \
+/Users/markusburkert/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin/python3 -u \
   tools/live_test.py --host 192.168.0.101:3180 --board board4
 ```
 
@@ -106,6 +106,11 @@ Der Test endet nach drei Darts automatisch. Er liest ausschließlich die
 Kamerabilder und verwendet das Autodarts-Ergebnis nicht als Eingabe. Abziehen,
 Bouncer und ein automatischer Wechsel zur nächsten Aufnahme sind in dieser
 ersten Live-Stufe noch nicht freigegeben.
+
+Wenn Kameras beim selben Sektor unterschiedliche Ringe erkennen, wird das
+Ergebnis nicht automatisch übernommen, sondern ausdrücklich als
+bestätigungspflichtig ausgegeben. Kurze Verbindungsabbrüche werden erneut
+versucht und beenden den Test nicht mehr sofort.
 
 ## Lokal starten
 

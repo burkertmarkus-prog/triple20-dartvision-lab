@@ -184,6 +184,9 @@ def select_cross_camera_consensus(
 
     agreement_mode = "position"
     confidence = "high"
+    field_alternatives = []
+    requires_confirmation = False
+    majority_field = None
     if best["maxDistance"] > 0.25:
         fields = [
             classify_board_point(item["boardPoint"], radii, profiles)["field"]
@@ -199,6 +202,8 @@ def select_cross_camera_consensus(
             return None
         agreement_mode = "field" if majority_count == len(fields) else "field-majority"
         confidence = "reduced"
+        field_alternatives = sorted(set(fields))
+        requires_confirmation = agreement_mode == "field-majority"
 
     selected_by_camera = {}
     for (camera, _), candidate in zip(available, best["combination"]):
@@ -229,6 +234,9 @@ def select_cross_camera_consensus(
         "cameraCount": len(best["combination"]),
         "agreementMode": agreement_mode,
         "confidence": confidence,
+        "requiresConfirmation": requires_confirmation,
+        "fieldAlternatives": field_alternatives,
+        "majorityField": majority_field,
         "meanDistance": round(best["meanDistance"], 4),
         "maxDistance": round(best["maxDistance"], 4),
         "boardPoint": {"x": float(center[0]), "y": float(center[1])},
@@ -273,6 +281,8 @@ def detect_multiple_hits(
             "confidence": primary["confidence"],
             "agreementMode": primary["agreementMode"],
             "nearWire": primary["nearWire"],
+            "requiresConfirmation": primary.get("requiresConfirmation", False),
+            "fieldAlternatives": primary.get("fieldAlternatives", []),
         }
     ]
     if max_darts == 1:
@@ -519,7 +529,13 @@ def main() -> None:
         classification = classify_board_point(
             report["consensus"]["boardPoint"], report["ringRadii"], report["ringProfiles"]
         )
-        report["consensus"]["predictedField"] = classification["field"]
+        geometric_field = classification["field"]
+        majority_field = report["consensus"].get("majorityField")
+        report["consensus"]["predictedField"] = majority_field or geometric_field
+        if report["consensus"].get("requiresConfirmation"):
+            report["consensus"]["fieldAlternatives"] = sorted(
+                set(report["consensus"].get("fieldAlternatives", [])) | {geometric_field}
+            )
         report["consensus"]["nearWire"] = classification["nearWire"]
         report["consensus"]["wireDistance"] = (
             round(float(classification["wireDistance"]), 6)

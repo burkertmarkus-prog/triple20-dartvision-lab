@@ -13,6 +13,7 @@ import json
 import subprocess
 import sys
 import time
+import urllib.error
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 from io import BytesIO
@@ -98,6 +99,10 @@ def show_detection(report_path: Path, number: int) -> dict | None:
     if not detection or not detection.get("predictedField"):
         print(f"Wurf {number}: nicht sicher erkannt")
         return None
+    if detection.get("requiresConfirmation"):
+        alternatives = "/".join(detection.get("fieldAlternatives") or [])
+        print(f"Wurf {number}: Bestätigung erforderlich ({alternatives})")
+        return detection
     field = detection["predictedField"]
     confidence = detection.get("confidence", "unbekannt")
     wire = " · nahe am Draht" if detection.get("nearWire") else ""
@@ -137,7 +142,12 @@ def main() -> None:
     try:
         while dart_count < args.max_darts:
             time.sleep(args.interval)
-            current = read_frames(urls, args.timeout)
+            try:
+                current = read_frames(urls, args.timeout)
+            except (OSError, RuntimeError, urllib.error.URLError) as error:
+                print(f"Kameraverbindung unterbrochen, neuer Versuch: {error}")
+                time.sleep(1.5)
+                continue
             change = frame_scores(baseline, current, args.pixel_threshold)
             movement = frame_scores(previous, current, args.pixel_threshold)
             changed_cameras = sum(score >= args.change_pixels for score in change)
